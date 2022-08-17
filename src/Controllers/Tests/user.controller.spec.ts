@@ -40,6 +40,14 @@ describe('UserController', () => {
     }),
     findAll:jest.fn().mockImplementation(()=>{
       return userArray
+    }),
+    findOne:jest.fn().mockImplementation(id=>{
+      return userArray.find(user=>user.id == id)
+    }),
+    remove:jest.fn().mockImplementation(id=>{
+      const user = userArray.indexOf(userArray.find(user=>user.id == id));
+      userArray.splice(user,1)
+      return userArray
     })
   }
 
@@ -88,9 +96,37 @@ describe('UserController', () => {
   })
 
   it('should find all Users',()=>{
-    expect(controller.findAll()).toEqual({
-      userArray
-    });
+    expect(controller.findAll()).toEqual(
+      userArray 
+    );
     expect(mockUserService.findAll).toHaveBeenCalled()
+  })
+
+  it('Should find a user by id',()=>{
+    expect(controller.findOne("2")).toEqual(
+      {
+        id:2,
+        name:"Antônio",
+        age:10,
+        cpf:113,
+        email:"test@yahoo.ck",
+        password:"senhadeteste"
+      }
+    )
+    expect(mockUserService.findOne).toHaveBeenCalled()
+  })
+  
+  it('Should remove a user by id',()=>{
+    expect(controller.remove("1")).toEqual(
+      [{
+        id:2,
+        name:"Antônio",
+        age:10,
+        cpf:113,
+        email:"test@yahoo.ck",
+        password:"senhadeteste"
+      }]
+    )
+    expect(mockUserService.remove).toHaveBeenCalled()
   })
 });
