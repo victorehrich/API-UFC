@@ -1,64 +1,82 @@
-import { Injectable, Res } from '@nestjs/common';
+import { Injectable, NotFoundException, Res } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from 'src/Models/CreateDTO/create-user.dto.model';
-import { UserModel } from 'src/Models/user.model';
-import { Repository, UpdateResult } from 'typeorm';
+import { CreateUserDto } from '../Models/CreateDTO/create-user.dto.model';
+import { UserModel } from '../Models/user.model';
+import { Repository } from 'typeorm';
 import { UpdateUserDto } from '../Models/UpdateDTO/update-user.dto.model';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(UserModel) private model: Repository<UserModel>){}
+  constructor(@InjectRepository(UserModel) private userRepository: Repository<UserModel>){}
 
   public async create(createUserDto: CreateUserDto):Promise<UserModel> {
+    //TODO utilizar uma biblioteca de criptografia e armazenar apenas a hash da senha
     try{
-      let createUserObj = await this.model.save(createUserDto)
+      let createUserObj = await this.userRepository.save(createUserDto)
       delete createUserObj.password
       return createUserObj
     }
     catch(err){
-      console.error(err)
+      throw new Error(err)
     }
   }
 
   public async findAll() {
-    const UserList = await this.model.find()
-    return UserList;
+    try{
+      const UserList = await this.userRepository.find()
+      
+      if(!UserList){
+        throw new NotFoundException("No User are in the database")
+      }
+      return UserList;
+    }catch(err){
+      throw new Error(err)
+    }
   }
 
   public async findOne(id: number) {
-    const User = await this.model.find({
-      where:{
-        id: id
+    try{
+      const User = await this.userRepository.findOne({
+        where:{
+          id: id
+        }
+      })
+      if(!User){
+        throw new NotFoundException(`User with a ${id} not found`)
       }
-    })
-    return User;
+      return User;
+
+    }catch(err){
+      throw new Error(err)
+    }
+
   }
 
   public async update(id: number, updateUserDto: UpdateUserDto):Promise<UserModel> {
     let UserUpdated
     try{
-      const User = this.findOne(id)
+      const User = await this.findOne(id)
       if(!!User){
-        UserUpdated = this.model.update(id,updateUserDto)
+        UserUpdated = await this.userRepository.update(id,updateUserDto)
       }
       return UserUpdated
     }
     catch(err){
-      return err
+      throw new Error(err)
     }
   }
 
   public async remove(id: number) {
-    let UserRemoved
     try{
-      const User = this.findOne(id)
+      const User = await this.findOne(id)
       if(!!User){
-        UserRemoved = this.model.delete(id)
+        await this.userRepository.delete(id)
+        return `User with id ${id} was successful removed`
       }
-      return UserRemoved
+      return "User not found"
     }
     catch(err){
-      return err
+      throw new Error(err)
     }
   }
 }
