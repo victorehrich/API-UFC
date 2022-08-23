@@ -10,7 +10,6 @@ export class UserService {
   constructor(@InjectRepository(UserModel) private userRepository: Repository<UserModel>){}
 
   public async create(createUserDto: CreateUserDto):Promise<UserModel> {
-    //TODO utilizar uma biblioteca de criptografia e armazenar apenas a hash da senha
     try{
       let createUserObj = await this.userRepository.save(createUserDto)
       delete createUserObj.password
